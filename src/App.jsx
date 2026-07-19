@@ -3,6 +3,7 @@ import { useEffect } from 'react';
 import { BrowserRouter, Routes, Route, useLocation } from 'react-router-dom';
 import ScrollProgress from './components/ScrollProgress.jsx';
 import Navbar from './components/navbar/Navbar.jsx';
+import Footer from './components/footer/Footer.jsx'
 import Landing from './pages/Landing.jsx';
 import Projects from './pages/Projects.jsx';
 
@@ -34,6 +35,7 @@ function AppContent() {
         <Route path="/" element={<Landing />} />
         <Route path="/projects" element={<Projects />} />
       </Routes>
+      <Footer/>
     </ScrollToTopWrapper>
   );
 }

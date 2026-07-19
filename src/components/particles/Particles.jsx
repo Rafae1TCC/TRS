@@ -98,7 +98,8 @@ const Particles = ({
   cameraDistance = 20,
   disableRotation = false,
   pixelRatio = 1,
-  className
+  className,
+  children
 }) => {
   const containerRef = useRef(null);
   const mouseRef = useRef({ x: 0, y: 0 });
@@ -113,6 +114,12 @@ const Particles = ({
       alpha: true
     });
     const gl = renderer.gl;
+
+    // Pin the canvas to the back of the stack, filling the container
+    gl.canvas.style.position = 'absolute';
+    gl.canvas.style.inset = '0';
+    gl.canvas.style.zIndex = '0';
+
     container.appendChild(gl.canvas);
     gl.clearColor(0, 0, 0, 0);
 
@@ -238,7 +245,11 @@ const Particles = ({
     pixelRatio
   ]);
 
-  return <div ref={containerRef} className={`particles-container ${className}`} />;
+  return (
+    <div ref={containerRef} className={`particles-container ${className}`}>
+      {children}
+    </div>
+  );
 };
 
 export default Particles;
