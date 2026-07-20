@@ -1,6 +1,5 @@
 import Section from '../components/section/Section.jsx'
-import Revenance from '../assets/revenance.png'
-import RevenanceSqr from '../assets/revenance_sqr.png'
+import RevenanceSqr from '../assets/projects/revenance_sqr.png'
 
 const PLACEHOLDER_IMG =
   'https://imgs.search.brave.com/aUhU7mIhff3AFAE7-C0mJ8X-5OcWQcdDD44rPKmzozs/rs:fit:860:0:0:0/g:ce/aHR0cHM6Ly91cGxv/YWQud2lraW1lZGlh/Lm9yZy93aWtpcGVk/aWEvY29tbW9ucy8x/LzE3L1BvZGNhc3Rf/Y292ZXJfYXJ0X3Bs/YWNlaG9sZGVyX2lt/YWdlLnBuZw'
@@ -17,7 +16,8 @@ const sections = [
     imageSrc: PLACEHOLDER_IMG,
     imageAlt: 'Imagen',
     ctaLabel: 'Conocer más',
-    linkName: '/us'
+    linkName: '/us',
+    particlesColor: '#750d0d'
   },
   {
     title: 'Explora nuestro último proyecto',
@@ -26,7 +26,8 @@ const sections = [
     imageAlt: 'Imagen',
     ctaLabel: 'Explorar',
     linkName: '/projects',
-    reverse: true
+    reverse: true,
+    particlesColor: '#750d0d'
   }
 ]
 

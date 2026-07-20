@@ -5,7 +5,7 @@ export function useTilt(options = {}) {
   const {
     maxRotate = 12,
     perspective = 900,
-    scale = 1.02,
+    scale = 1.00,
   } = options;
 
   const ref = useRef(null);

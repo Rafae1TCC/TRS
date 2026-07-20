@@ -1,0 +1,9 @@
+/* src/pages/Projects.css */
+/* Import the font */
+@import '../assets/fonts/fonts.css';
+
+/* Or if using CSS modules, this would be different */
+
+.enchant {
+  font-family: 'EnchantFont', 'Times New Roman', serif;
+}

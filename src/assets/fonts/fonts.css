@@ -1,0 +1,12 @@
+/* src/assets/fonts/fonts.css */
+@font-face {
+  font-family: 'EnchantFont';
+  src: url('./mc_enchant_table.ttf') format('truetype');
+  font-weight: normal;
+  font-style: normal;
+}
+
+/* Also add a fallback for other text elements if needed */
+.enchant {
+  font-family: 'EnchantFont', 'Times New Roman', serif;
+}
