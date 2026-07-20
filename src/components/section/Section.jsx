@@ -14,8 +14,7 @@ export default function Section({
   reverse, 
   linkName,
   particlesColor,
-  fontClass,
-  icon
+  fontClass
 }) {
   
   const imageRef = useTilt({
@@ -65,7 +64,11 @@ export default function Section({
           showCallback
         />
         <div className="button">
-          <Link to={linkName}>
+          <Link
+            to={linkName}
+            className="cta-link"
+            style={{ '--particles-color': particlesColor }}
+          >
             <SplitText
               text={ctaLabel}
               className={fontClass}

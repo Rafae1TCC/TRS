@@ -17,7 +17,7 @@ const sections = [
     imageAlt: 'Imagen',
     ctaLabel: 'Conocer más',
     linkName: '/us',
-    particlesColor: '#750d0d'
+    particlesColor: '#fff'
   },
   {
     title: 'Explora nuestro último proyecto',

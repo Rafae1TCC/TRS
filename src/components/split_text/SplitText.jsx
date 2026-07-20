@@ -20,9 +20,11 @@ const SplitText = ({
   textAlign = 'center',
   tag = 'p',
   onLetterAnimationComplete,
-  icon = ''
+  icon = '',
+  accentColor = '' // New prop
 }) => {
   const ref = useRef(null);
+  const iconRef = useRef(null);
   const animationCompletedRef = useRef(false);
   const onCompleteRef = useRef(onLetterAnimationComplete);
   const [fontsLoaded, setFontsLoaded] = useState(false);
@@ -88,7 +90,9 @@ const SplitText = ({
         reduceWhiteSpace: false,
         onSplit: self => {
           assignTargets(self);
-          const tween = gsap.fromTo(
+          
+          // Create animation for text targets
+          const textTween = gsap.fromTo(
             targets,
             { ...from },
             {
@@ -111,7 +115,31 @@ const SplitText = ({
               force3D: true
             }
           );
-          return tween;
+
+          // Animate icon separately if it exists
+          if (icon && iconRef.current) {
+            gsap.fromTo(
+              iconRef.current,
+              { ...from },
+              {
+                ...to,
+                duration,
+                ease,
+                delay: (targets.length * delay) / 1000,
+                scrollTrigger: {
+                  trigger: el,
+                  start,
+                  once: true,
+                  fastScrollEnd: true,
+                  anticipatePin: 0.4
+                },
+                willChange: 'transform, opacity',
+                force3D: true
+              }
+            );
+          }
+          
+          return textTween;
         }
       });
 
@@ -140,7 +168,9 @@ const SplitText = ({
         JSON.stringify(to),
         threshold,
         rootMargin,
-        fontsLoaded
+        fontsLoaded,
+        icon,
+        accentColor // Add accentColor as dependency
       ],
       scope: ref
     }
@@ -158,17 +188,30 @@ const SplitText = ({
     const classes = `split-parent ${className}`;
     const Tag = tag || 'p';
 
-    if (icon != ''){
-      return(
-      <Tag ref={ref} style={style} className={classes}>
-        {text}
-        <i className={icon}></i>
-      </Tag>
+    // If accentColor is provided, apply it as a CSS custom property
+    const wrapperStyle = accentColor ? {
+      '--accent-color': accentColor
+    } : {};
+
+    if (icon) {
+      return (
+        <Tag ref={ref} style={{ ...style, ...wrapperStyle }} className={classes}>
+          {text}
+          <i 
+            ref={iconRef} 
+            className={icon} 
+            style={{ 
+              display: 'inline-block',
+              color: accentColor || 'inherit',
+              transition: 'color 0.3s ease'
+            }}
+          ></i>
+        </Tag>
       );
     }
 
     return (
-      <Tag ref={ref} style={style} className={classes}>
+      <Tag ref={ref} style={{ ...style, ...wrapperStyle }} className={classes}>
         {text}
       </Tag>
     );

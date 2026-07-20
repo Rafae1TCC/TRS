@@ -66,15 +66,18 @@ a:hover {
   color: white;
 }
 
-a::after {
+a::after{
   content: '';
   position: absolute;
   left: 0;
   bottom: -8px;
   width: 0;
   height: 2px;
-  background: var(--accent);
   transition: var(--transition);
+}
+
+.header a::after {
+  background: var(--accent);
 }
 
 a:hover::after {
@@ -126,17 +129,17 @@ a i {
 }
 
 .container {
-  flex: 1 1 0;      /* both containers share the row equally, and can shrink */
-  min-width: 0;     /* the actual fix: lets a flex child shrink past its content's natural size */
+  flex: 1 1 0;  
+  min-width: 0;
 }
 
 .container img {
   display: block;
   width: 100%;
-  height: 100%;          /* fill the container's height, not just its width */
+  height: 100%;
   max-width: 1000px;
-  aspect-ratio: 2 / 1;    /* keeps the container's box shape consistent */
-  object-fit: cover;      /* scales the image to fill the box, cropping overflow */
+  aspect-ratio: 2 / 1;
+  object-fit: cover;
   object-position: center;
 }
 
