@@ -6,6 +6,7 @@ import './Leaderboard.css';
 
 const KILLS_STAT_KEY = 'killed/entity.minecraft.player';
 const DEATHS_STAT_KEY = 'custom/minecraft:deaths';
+const TIME_ALIVE_KEY = 'custom/minecraft:time_since_death';
 
 const handleAnimationComplete = () => {};
 
@@ -24,9 +25,10 @@ export default function Leaderboard() {
 
         // getLeaderboard retries forever on network errors / 5xx / 429,
         // so this only rejects on a non-retryable error (e.g. bad stat key).
-        const [killsRes, deathsRes] = await Promise.all([
+        const [killsRes, deathsRes, timeRes] = await Promise.all([
           getLeaderboard(KILLS_STAT_KEY, { limit: 100, signal: controller.signal }),
           getLeaderboard(DEATHS_STAT_KEY, { limit: 100, signal: controller.signal }),
+          getLeaderboard(TIME_ALIVE_KEY, { limit: 100, signal: controller.signal }),
         ]);
 
         // Merge the two leaderboards into one row per player, keyed by uuid.
@@ -48,6 +50,16 @@ export default function Leaderboard() {
             kills: 0,
           };
           existing.deaths = row.value;
+          merged.set(row.uuid, existing);
+        });
+
+        timeRes.leaderboard.forEach((row) => {
+          const existing = merged.get(row.uuid) || {
+            uuid: row.uuid,
+            name: row.username,
+            timeAlive: 0,
+          };
+          existing.timeAlive = row.value;
           merged.set(row.uuid, existing);
         });
 
@@ -137,14 +149,12 @@ export default function Leaderboard() {
             ]}
           />
           <LeaderboardTable
-            title="Most Deaths"
+            title="Longest time alive"
             data={players}
-            sortKey="deaths"
+            sortKey="timeAlive"
             loading={loading}
             columns={[
-              { key: 'deaths', label: 'Deaths', highlight: true },
-              { key: 'kills', label: 'Kills' },
-              { key: 'kdr', label: 'KDR' },
+              { key: 'timeAlive', label: 'Time', highlight: true },
             ]}
           />
         </div>
