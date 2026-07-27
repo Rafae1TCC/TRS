@@ -1,24 +1,15 @@
 // src/services/api.js
 //
 // Central place for every call to the Minecraft Stats API.
-// Import what you need wherever you need it, e.g.:
-//   import { getLeaderboard, getPlayers } from '../../services/api';
 //
-// Configure the backend URL with a Vite env var so it's easy to point at
-// localhost during development and your real server in production.
-// Create a `.env` file at your project root with:
-//   VITE_API_URL=http://localhost:8000
-// (or wherever your FastAPI app is running / deployed).
+// All requests are relative paths ("/api/players", etc). In production,
+// the browser resolves that against whatever domain served the page
+// (teamrocketstudios.com), and nginx inside the container proxies it to
+// the stats_api container over the internal Docker network. The API is
+// never exposed to the public internet.
 
-const BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
-
-/**
- * Internal helper: does the fetch, checks the response, parses JSON,
- * and throws a readable error if anything goes wrong. Every exported
- * function below is a thin wrapper around this.
- */
 async function request(path, { params, ...options } = {}) {
-  const url = new URL(`${BASE_URL}${path}`);
+  const url = new URL(path, window.location.origin);
 
   if (params) {
     Object.entries(params).forEach(([key, value]) => {
@@ -35,7 +26,6 @@ async function request(path, { params, ...options } = {}) {
       ...options,
     });
   } catch (err) {
-    // Network error (server down, CORS, no connection, etc.)
     throw new Error(`Network error calling ${path}: ${err.message}`);
   }
 
