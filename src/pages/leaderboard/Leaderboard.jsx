@@ -1,10 +1,13 @@
-// Leaderboard.jsx
-import { useState, useEffect, useMemo } from 'react';
+import { useEffect, useState } from 'react';
 import LeaderboardTable from '../../components/leaderboard_table/LeaderboardTable';
 import SplitText from '../../components/split_text/SplitText';
+import { getLeaderboard, getPlayerAdvancements } from '../../services/api';
 import './Leaderboard.css';
 
-const API_BASE_URL = import.meta.env.VITE_API_URL;
+const KILLS_STAT_KEY = 'minecraft:custom/minecraft:player_kills';
+const DEATHS_STAT_KEY = 'minecraft:custom/minecraft:deaths';
+
+const handleAnimationComplete = () => {};
 
 export default function Leaderboard() {
   const [players, setPlayers] = useState([]);
@@ -12,110 +15,80 @@ export default function Leaderboard() {
   const [error, setError] = useState(null);
 
   useEffect(() => {
-    const fetchAllPlayerStats = async () => {
+    let cancelled = false;
+
+    async function loadLeaderboardData() {
       try {
-        console.log('Fetching from API:', API_BASE_URL); // Debug log
-        
-        // Fetch all players first
-        const playersResponse = await fetch(`${API_BASE_URL}/api/players?limit=100`);
-        if (!playersResponse.ok) throw new Error('Failed to fetch players');
-        const playersData = await playersResponse.json();
+        setLoading(true);
+        setError(null);
 
-        // Fetch stats for each player and combine
-        const playersWithStats = await Promise.all(
-          playersData.players.map(async (player) => {
+        // Pull kills + deaths leaderboards in parallel.
+        const [killsRes, deathsRes] = await Promise.all([
+          getLeaderboard(KILLS_STAT_KEY, { limit: 100 }),
+          getLeaderboard(DEATHS_STAT_KEY, { limit: 100 }),
+        ]);
+
+        // Merge the two leaderboards into one row per player, keyed by uuid.
+        const merged = new Map();
+
+        killsRes.leaderboard.forEach((row) => {
+          merged.set(row.uuid, {
+            uuid: row.uuid,
+            name: row.username,
+            kills: row.value,
+            deaths: 0,
+          });
+        });
+
+        deathsRes.leaderboard.forEach((row) => {
+          const existing = merged.get(row.uuid) || {
+            uuid: row.uuid,
+            name: row.username,
+            kills: 0,
+          };
+          existing.deaths = row.value;
+          merged.set(row.uuid, existing);
+        });
+
+        const withAchievements = await Promise.all(
+          Array.from(merged.values()).map(async (player) => {
             try {
-              const statsResponse = await fetch(`${API_BASE_URL}/api/players/${player.uuid}/stats`);
-              if (!statsResponse.ok) {
-                // Return default stats if player has no stats
-                return {
-                  name: player.username,
-                  uuid: player.uuid,
-                  kills: 0,
-                  deaths: 0,
-                  achievements: 0,
-                  kdr: '0.0',
-                };
-              }
-              const statsData = await statsResponse.json();
-
-              // Find specific stats from the stats array
-              const kills = statsData.stats.find(s => s.stat_key === 'kills')?.value || 0;
-              const deaths = statsData.stats.find(s => s.stat_key === 'deaths')?.value || 0;
-              
-              // For achievements, you might need to fetch from a different endpoint
-              // or calculate from the advancements data
-              const kdr = deaths > 0 ? (kills / deaths).toFixed(1) : kills > 0 ? kills.toFixed(1) : '0.0';
-
+              const advRes = await getPlayerAdvancements(player.uuid);
               return {
-                name: player.username,
-                uuid: player.uuid,
-                kills: kills,
-                deaths: deaths,
-                achievements: 0, // You'll need to fetch achievements separately
-                kdr: kdr,
+                ...player,
+                achievements: advRes.summary.completed,
               };
-            } catch (err) {
-              console.error(`Error fetching stats for ${player.username}:`, err);
-              return {
-                name: player.username,
-                uuid: player.uuid,
-                kills: 0,
-                deaths: 0,
-                achievements: 0,
-                kdr: '0.0',
-              };
+            } catch {
+              return { ...player, achievements: 0 };
             }
           })
         );
 
-        // Sort by kills for the data
-        setPlayers(playersWithStats);
-        setLoading(false);
+        const withKdr = withAchievements.map((p) => ({
+          ...p,
+          kdr: p.deaths > 0 ? (p.kills / p.deaths).toFixed(1) : p.kills.toFixed(1),
+        }));
+
+        if (!cancelled) {
+          setPlayers(withKdr);
+        }
       } catch (err) {
-        console.error('Error fetching leaderboard data:', err);
-        setError(err.message);
-        setLoading(false);
+        if (!cancelled) {
+          setError(err.message);
+        }
+      } finally {
+        if (!cancelled) {
+          setLoading(false);
+        }
       }
+    }
+
+    loadLeaderboardData();
+
+    return () => {
+      cancelled = true;
     };
-
-    fetchAllPlayerStats();
   }, []);
-
-  // Memoize sorted data for each leaderboard type
-  const sortedByKills = useMemo(() => {
-    return [...players].sort((a, b) => b.kills - a.kills);
-  }, [players]);
-
-  const sortedByAchievements = useMemo(() => {
-    return [...players].sort((a, b) => b.achievements - a.achievements);
-  }, [players]);
-
-  const sortedByDeaths = useMemo(() => {
-    return [...players].sort((a, b) => b.deaths - a.deaths);
-  }, [players]);
-
-  const handleAnimationComplete = () => {};
-
-  if (loading) {
-    return (
-      <div className="leaderboard-page">
-        <div className="loading-container">
-          <p>Loading leaderboard data...</p>
-        </div>
-      </div>
-    );
-  }
-
-  if (error) {
-    return (
-      <div className="leaderboard-page">
-        <div className="error-container">
-          <p>Error loading leaderboard data: {error}</p>
-        </div>
-      </div>
-    );
-  }
 
   return (
     <div className="leaderboard-page">
@@ -140,38 +113,41 @@ export default function Leaderboard() {
         </p>
       </div>
 
-      <div className="leaderboard-container">
-        <LeaderboardTable
-          title="Most Kills"
-          data={sortedByKills}
-          sortKey="kills"
-          columns={[
-            { key: 'kills', label: 'Kills', highlight: true },
-            { key: 'deaths', label: 'Deaths' },
-            { key: 'kdr', label: 'KDR' },
-          ]}
-        />
+      {loading && <p className="leaderboard-status">Loading leaderboard…</p>}
+      {error && <p className="leaderboard-status leaderboard-error">Error: {error}</p>}
 
-        <LeaderboardTable
-          title="Most Achievements"
-          data={sortedByAchievements}
-          sortKey="achievements"
-          columns={[
-            { key: 'achievements', label: 'Achievements', highlight: true },
-          ]}
-        />
-
-        <LeaderboardTable
-          title="Most Deaths"
-          data={sortedByDeaths}
-          sortKey="deaths"
-          columns={[
-            { key: 'deaths', label: 'Deaths', highlight: true },
-            { key: 'kills', label: 'Kills' },
-            { key: 'kdr', label: 'KDR' },
-          ]}
-        />
-      </div>
+      {!loading && !error && (
+        <div className="leaderboard-container">
+          <LeaderboardTable
+            title="Most Kills"
+            data={players}
+            sortKey="kills"
+            columns={[
+              { key: 'kills', label: 'Kills', highlight: true },
+              { key: 'deaths', label: 'Deaths' },
+              { key: 'kdr', label: 'KDR' },
+            ]}
+          />
+          <LeaderboardTable
+            title="Most Achievements"
+            data={players}
+            sortKey="achievements"
+            columns={[
+              { key: 'achievements', label: 'Achievements', highlight: true },
+            ]}
+          />
+          <LeaderboardTable
+            title="Most Deaths"
+            data={players}
+            sortKey="deaths"
+            columns={[
+              { key: 'deaths', label: 'Deaths', highlight: true },
+              { key: 'kills', label: 'Kills' },
+              { key: 'kdr', label: 'KDR' },
+            ]}
+          />
+        </div>
+      )}
     </div>
   );
 }
