@@ -21,7 +21,7 @@ const sections = [
   },
   {
     title: 'Explora nuestro último proyecto',
-    text: LOREM,
+    text: "Una experiencia multijugador en Minecraft Java Edition, diseñada para demostrar quién es el más fuerte. En este servidor, cuando mueres, quedas fuera del juego temporalmente. Deberás administrar tus recursos, formar alianzas y pelear para no ser eliminado.",
     imageSrc: RevenanceSqr,
     imageAlt: 'Imagen',
     ctaLabel: 'Explorar',

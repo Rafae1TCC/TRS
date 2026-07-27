@@ -35,7 +35,7 @@ export default function Section({
           delay={50}
           duration={1.25}
           ease="power3.out"
-          splitType="chars"
+          splitType="words"
           from={{ opacity: 0, y: 40 }}
           to={{ opacity: 1, y: 0 }}
           threshold={0.1}
