@@ -1,4 +1,4 @@
-import { useRef, useEffect, useState } from 'react';
+import { useRef, useEffect, useState, forwardRef, useImperativeHandle } from 'react';
 import { gsap } from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import { SplitText as GSAPSplitText } from 'gsap/SplitText';
@@ -6,7 +6,7 @@ import { useGSAP } from '@gsap/react';
 
 gsap.registerPlugin(ScrollTrigger, GSAPSplitText, useGSAP);
 
-const SplitText = ({
+const SplitText = forwardRef(({
   text,
   className = '',
   delay = 50,
@@ -21,15 +21,17 @@ const SplitText = ({
   tag = 'p',
   onLetterAnimationComplete,
   icon = '',
-  accentColor = '' // New prop
-}) => {
-  const ref = useRef(null);
-  const iconRef = useRef(null);
+  accentColor = ''
+}, ref) => {
+  const elRef = useRef(null);
+  const iconElRef = useRef(null);
   const animationCompletedRef = useRef(false);
   const onCompleteRef = useRef(onLetterAnimationComplete);
   const [fontsLoaded, setFontsLoaded] = useState(false);
 
-  // Keep callback ref updated
+  const textTweenRef = useRef(null);
+  const iconTweenRef = useRef(null);
+
   useEffect(() => {
     onCompleteRef.current = onLetterAnimationComplete;
   }, [onLetterAnimationComplete]);
@@ -46,10 +48,9 @@ const SplitText = ({
 
   useGSAP(
     () => {
-      if (!ref.current || !text || !fontsLoaded) return;
-      // Prevent re-animation if already completed
+      if (!elRef.current || !text || !fontsLoaded) return;
       if (animationCompletedRef.current) return;
-      const el = ref.current;
+      const el = elRef.current;
 
       if (el._rbsplitInstance) {
         try {
@@ -90,8 +91,7 @@ const SplitText = ({
         reduceWhiteSpace: false,
         onSplit: self => {
           assignTargets(self);
-          
-          // Create animation for text targets
+
           const textTween = gsap.fromTo(
             targets,
             { ...from },
@@ -116,10 +116,11 @@ const SplitText = ({
             }
           );
 
-          // Animate icon separately if it exists
-          if (icon && iconRef.current) {
-            gsap.fromTo(
-              iconRef.current,
+          textTweenRef.current = textTween;
+
+          if (icon && iconElRef.current) {
+            const iconTween = gsap.fromTo(
+              iconElRef.current,
               { ...from },
               {
                 ...to,
@@ -137,8 +138,10 @@ const SplitText = ({
                 force3D: true
               }
             );
+
+            iconTweenRef.current = iconTween;
           }
-          
+
           return textTween;
         }
       });
@@ -170,11 +173,22 @@ const SplitText = ({
         rootMargin,
         fontsLoaded,
         icon,
-        accentColor // Add accentColor as dependency
+        accentColor
       ],
-      scope: ref
+      scope: elRef
     }
   );
+
+  useImperativeHandle(ref, () => ({
+    reverse: () => {
+      textTweenRef.current?.reverse();
+      iconTweenRef.current?.reverse();
+    },
+    play: () => {
+      textTweenRef.current?.play();
+      iconTweenRef.current?.play();
+    }
+  }));
 
   const renderTag = () => {
     const style = {
@@ -188,22 +202,20 @@ const SplitText = ({
     const classes = `split-parent ${className}`;
     const Tag = tag || 'p';
 
-    // If accentColor is provided, apply it as a CSS custom property
     const wrapperStyle = accentColor ? {
       '--accent-color': accentColor
     } : {};
 
     if (icon) {
       return (
-        <Tag ref={ref} style={{ ...style, ...wrapperStyle }} className={classes}>
+        <Tag ref={elRef} style={{ ...style, ...wrapperStyle }} className={classes}>
           {text}
-          <i 
-            ref={iconRef} 
-            className={icon} 
-            style={{ 
+          <i
+            ref={iconElRef}
+            className={icon}
+            style={{
               display: 'inline-block',
-              color: accentColor || 'inherit',
-              transition: 'color 0.3s ease'
+              color: accentColor || 'inherit'
             }}
           ></i>
         </Tag>
@@ -211,12 +223,15 @@ const SplitText = ({
     }
 
     return (
-      <Tag ref={ref} style={{ ...style, ...wrapperStyle }} className={classes}>
+      <Tag ref={elRef} style={{ ...style, ...wrapperStyle }} className={classes}>
         {text}
       </Tag>
     );
   };
+
   return renderTag();
-};
+});
+
+SplitText.displayName = 'SplitText';
 
 export default SplitText;

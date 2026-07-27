@@ -1,11 +1,12 @@
 // App.jsx
 import { useEffect } from 'react';
 import { BrowserRouter, Routes, Route, useLocation } from 'react-router-dom';
-import ScrollProgress from './components/ScrollProgress.jsx';
+import ScrollProgress from './components/scroll_progress/ScrollProgress.jsx';
 import Navbar from './components/navbar/Navbar.jsx';
 import Footer from './components/footer/Footer.jsx'
-import Landing from './pages/Landing.jsx';
-import Projects from './pages/Projects.jsx';
+import Landing from './pages/landing/Landing.jsx';
+import Projects from './pages/projects/Projects.jsx';
+import Leaderboard from './pages/leaderboard/Leaderboard.jsx';
 
 // Create a wrapper component that handles scrolling
 function ScrollToTopWrapper({ children }) {
@@ -34,6 +35,7 @@ function AppContent() {
       <Routes>
         <Route path="/" element={<Landing />} />
         <Route path="/projects" element={<Projects />} />
+        <Route path="/leaderboard" element={<Leaderboard />} />
       </Routes>
       <Footer/>
     </ScrollToTopWrapper>

@@ -28,9 +28,9 @@ export default function Navbar() {
         <Link to="/projects">
           Proyectos<i className="ri-grid-line"></i>
         </Link>
-        <a href="#">
+        <Link to="/leaderboard">
           Leaderboard<i className="ri-bar-chart-box-line"></i>
-        </a>
+        </Link>
         <a href="#">
           Comunidad<i className="ri-team-line"></i>
         </a>

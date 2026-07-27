@@ -1,0 +1,53 @@
+.leaderboard-row {
+  display: grid;
+  grid-column: 1 / -1;
+  grid-template-columns: subgrid;
+  align-items: center;
+  padding: 18px 28px;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  transition: transform var(--transition), border-color var(--transition), background var(--transition);
+}
+
+.leaderboard-row span {
+  font-size: 14px;
+}
+
+.leaderboard-row:hover {
+  transform: translateX(6px);
+  border-color: var(--accent);
+  background: #181818;
+}
+
+.col {
+  color: var(--text);
+  font-size: 1rem;
+}
+
+.col-stat {
+  color: var(--text-light);
+  font-variant-numeric: tabular-nums;
+}
+
+.col-stat-highlight {
+  color: var(--text);
+  font-weight: 700;
+}
+
+.rank-number {
+  font-weight: 700;
+  font-size: 1.1rem;
+  color: var(--text-light);
+}
+
+.player-name {
+  font-weight: 700;
+  letter-spacing: -0.3px;
+}
+
+@media (max-width: 640px) {
+  .leaderboard-row {
+    padding-left: 16px;
+    padding-right: 16px;
+  }
+}
