@@ -1,13 +1,67 @@
-.leaderboard-row-skeleton {
+.leaderboard-table {
+  margin-bottom: 70px;
+  min-width: 0;
+  overflow-x: auto;
+}
+
+.leaderboard-table-title {
+  font-size: 1.6rem;
+  font-weight: 700;
+  letter-spacing: -0.5px;
+  margin-bottom: 18px;
+  padding-left: 4px;
+  position: relative;
+}
+
+.leaderboard-table-title::before {
+  content: '';
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  margin-right: 12px;
+}
+
+.leaderboard-grid {
+  display: grid;
+  column-gap: 16px;
+  row-gap: 10px;
+}
+
+.leaderboard-head {
   display: grid;
   grid-column: 1 / -1;
   grid-template-columns: subgrid;
   align-items: center;
-  padding: 14px 28px;
+  padding: 0 28px 12px;
+  color: var(--text-light);
+  font-size: 0.8rem;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  border-bottom: 1px solid var(--border);
+}
+
+@media (max-width: 640px) {
+  .leaderboard-head {
+    padding-left: 16px;
+    padding-right: 16px;
+  }
+}
+
+/* Skeleton rows reuse .leaderboard-row / .col from Card.css for identical
+   subgrid alignment; this modifier just disables hover/transition and
+   sizes/animates the placeholder blocks. */
+.leaderboard-row-skeleton {
+  pointer-events: none;
+  transition: none;
+}
+
+.leaderboard-row-skeleton:hover {
+  border-color: var(--border);
+  background: var(--bg-card);
 }
 
 .skeleton-block {
-  display: block;
+  display: inline-block;
   height: 14px;
   border-radius: 4px;
   background: linear-gradient(
@@ -25,12 +79,13 @@
 }
 
 .skeleton-name {
-  width: 60%;
+  width: 70%;
+  min-width: 60px;
   height: 16px;
 }
 
 .skeleton-stat {
-  width: 36px;
+  width: 32px;
 }
 
 @keyframes skeleton-pulse {
@@ -39,12 +94,5 @@
   }
   100% {
     background-position: -200% 0;
-  }
-}
-
-@media (max-width: 640px) {
-  .leaderboard-row-skeleton {
-    padding-left: 16px;
-    padding-right: 16px;
   }
 }

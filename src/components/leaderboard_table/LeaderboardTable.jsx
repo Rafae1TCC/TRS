@@ -26,11 +26,17 @@ export default function LeaderboardTable({ title, data, sortKey, columns, loadin
 
         {loading
           ? Array.from({ length: SKELETON_ROWS }).map((_, i) => (
-              <div className="leaderboard-row-skeleton" key={`skeleton-${i}`}>
-                <span className="skeleton-block skeleton-rank" />
-                <span className="skeleton-block skeleton-name" />
+              <div className="leaderboard-row leaderboard-row-skeleton" key={`skeleton-${i}`}>
+                <div className="col col-rank">
+                  <span className="skeleton-block skeleton-rank" />
+                </div>
+                <div className="col col-player">
+                  <span className="skeleton-block skeleton-name" />
+                </div>
                 {columns.map((col) => (
-                  <span className="skeleton-block skeleton-stat" key={col.key} />
+                  <div className="col col-stat" key={col.key}>
+                    <span className="skeleton-block skeleton-stat" />
+                  </div>
                 ))}
               </div>
             ))
