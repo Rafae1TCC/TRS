@@ -4,8 +4,8 @@ import SplitText from '../../components/split_text/SplitText';
 import { getLeaderboard, getPlayerAdvancements } from '../../services/api';
 import './Leaderboard.css';
 
-const KILLS_STAT_KEY = 'minecraft:custom/minecraft:player_kills';
-const DEATHS_STAT_KEY = 'minecraft:custom/minecraft:deaths';
+const KILLS_STAT_KEY = 'custom/minecraft:deaths';
+const DEATHS_STAT_KEY = 'killed/entity.minecraft.player';
 
 const handleAnimationComplete = () => {};
 
