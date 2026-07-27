@@ -4,8 +4,8 @@ import SplitText from '../../components/split_text/SplitText';
 import { getLeaderboard, getPlayerAdvancements } from '../../services/api';
 import './Leaderboard.css';
 
-const KILLS_STAT_KEY = 'custom/minecraft:deaths';
-const DEATHS_STAT_KEY = 'killed/entity.minecraft.player';
+const KILLS_STAT_KEY = 'killed/entity.minecraft.player';
+const DEATHS_STAT_KEY = 'custom/minecraft:deaths';
 
 const handleAnimationComplete = () => {};
 
@@ -15,17 +15,18 @@ export default function Leaderboard() {
   const [error, setError] = useState(null);
 
   useEffect(() => {
-    let cancelled = false;
+    const controller = new AbortController();
 
     async function loadLeaderboardData() {
       try {
         setLoading(true);
         setError(null);
 
-        // Pull kills + deaths leaderboards in parallel.
+        // getLeaderboard retries forever on network errors / 5xx / 429,
+        // so this only rejects on a non-retryable error (e.g. bad stat key).
         const [killsRes, deathsRes] = await Promise.all([
-          getLeaderboard(KILLS_STAT_KEY, { limit: 100 }),
-          getLeaderboard(DEATHS_STAT_KEY, { limit: 100 }),
+          getLeaderboard(KILLS_STAT_KEY, { limit: 100, signal: controller.signal }),
+          getLeaderboard(DEATHS_STAT_KEY, { limit: 100, signal: controller.signal }),
         ]);
 
         // Merge the two leaderboards into one row per player, keyed by uuid.
@@ -59,6 +60,8 @@ export default function Leaderboard() {
                 achievements: advRes.summary.completed,
               };
             } catch {
+              // A single player's advancement lookup failing shouldn't
+              // take down the whole table.
               return { ...player, achievements: 0 };
             }
           })
@@ -69,15 +72,14 @@ export default function Leaderboard() {
           kdr: p.deaths > 0 ? (p.kills / p.deaths).toFixed(1) : p.kills.toFixed(1),
         }));
 
-        if (!cancelled) {
+        if (!controller.signal.aborted) {
           setPlayers(withKdr);
+          setLoading(false);
         }
       } catch (err) {
-        if (!cancelled) {
+        if (err.name === 'AbortError') return;
+        if (!controller.signal.aborted) {
           setError(err.message);
-        }
-      } finally {
-        if (!cancelled) {
           setLoading(false);
         }
       }
@@ -86,7 +88,7 @@ export default function Leaderboard() {
     loadLeaderboardData();
 
     return () => {
-      cancelled = true;
+      controller.abort();
     };
   }, []);
 
@@ -108,20 +110,17 @@ export default function Leaderboard() {
           onLetterAnimationComplete={handleAnimationComplete}
           showCallback
         />
-        <p className="leaderboard-subtitle">
-          Ranked by kills, achievements, and deaths across all tracked matches.
-        </p>
       </div>
 
-      {loading && <p className="leaderboard-status">Loading leaderboard…</p>}
       {error && <p className="leaderboard-status leaderboard-error">Error: {error}</p>}
 
-      {!loading && !error && (
+      {!error && (
         <div className="leaderboard-container">
           <LeaderboardTable
             title="Most Kills"
             data={players}
             sortKey="kills"
+            loading={loading}
             columns={[
               { key: 'kills', label: 'Kills', highlight: true },
               { key: 'deaths', label: 'Deaths' },
@@ -132,6 +131,7 @@ export default function Leaderboard() {
             title="Most Achievements"
             data={players}
             sortKey="achievements"
+            loading={loading}
             columns={[
               { key: 'achievements', label: 'Achievements', highlight: true },
             ]}
@@ -140,6 +140,7 @@ export default function Leaderboard() {
             title="Most Deaths"
             data={players}
             sortKey="deaths"
+            loading={loading}
             columns={[
               { key: 'deaths', label: 'Deaths', highlight: true },
               { key: 'kills', label: 'Kills' },

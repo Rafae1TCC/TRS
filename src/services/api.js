@@ -8,7 +8,41 @@
 // the stats_api container over the internal Docker network. The API is
 // never exposed to the public internet.
 
-async function request(path, { params, ...options } = {}) {
+class ApiError extends Error {
+  constructor(message, status) {
+    super(message);
+    this.name = 'ApiError';
+    this.status = status;
+  }
+}
+
+const BASE_RETRY_DELAY_MS = 1000;
+const MAX_RETRY_DELAY_MS = 30000;
+
+function isRetryableStatus(status) {
+  // 0 = network/connection failure (no response at all).
+  return status === 0 || status === 429 || status >= 500;
+}
+
+function sleep(ms, signal) {
+  return new Promise((resolve, reject) => {
+    if (signal?.aborted) {
+      reject(new DOMException('Aborted', 'AbortError'));
+      return;
+    }
+    const timer = setTimeout(resolve, ms);
+    signal?.addEventListener(
+      'abort',
+      () => {
+        clearTimeout(timer);
+        reject(new DOMException('Aborted', 'AbortError'));
+      },
+      { once: true }
+    );
+  });
+}
+
+async function request(path, { params, signal, ...options } = {}) {
   const url = new URL(path, window.location.origin);
 
   if (params) {
@@ -23,10 +57,12 @@ async function request(path, { params, ...options } = {}) {
   try {
     response = await fetch(url.toString(), {
       headers: { 'Content-Type': 'application/json' },
+      signal,
       ...options,
     });
   } catch (err) {
-    throw new Error(`Network error calling ${path}: ${err.message}`);
+    if (err.name === 'AbortError') throw err;
+    throw new ApiError(`Network error calling ${path}: ${err.message}`, 0);
   }
 
   if (!response.ok) {
@@ -37,10 +73,39 @@ async function request(path, { params, ...options } = {}) {
     } catch {
       // response wasn't JSON, ignore
     }
-    throw new Error(`API error (${response.status}) on ${path}: ${detail}`);
+    throw new ApiError(`API error (${response.status}) on ${path}: ${detail}`, response.status);
   }
 
   return response.json();
+}
+
+// Like `request`, but retries forever (with capped exponential backoff +
+// jitter) on network errors, 429s, and 5xx responses. Non-retryable errors
+// (4xx other than 429) are thrown immediately. Pass `signal` from an
+// AbortController to stop retrying, e.g. on component unmount.
+async function requestWithRetry(path, options = {}) {
+  const { signal, ...rest } = options;
+  let attempt = 0;
+
+  for (;;) {
+    if (signal?.aborted) {
+      throw new DOMException('Aborted', 'AbortError');
+    }
+
+    try {
+      return await request(path, { ...rest, signal });
+    } catch (err) {
+      if (err.name === 'AbortError') throw err;
+
+      const status = err.status ?? 0;
+      if (!isRetryableStatus(status)) throw err;
+
+      attempt += 1;
+      const delay = Math.min(BASE_RETRY_DELAY_MS * 2 ** (attempt - 1), MAX_RETRY_DELAY_MS);
+      const jitter = delay * (0.5 + Math.random() * 0.5);
+      await sleep(jitter, signal);
+    }
+  }
 }
 
 // ============================================
@@ -91,9 +156,13 @@ export function getAdvancementDefinitions({ category, limit = 100 } = {}) {
 // LEADERBOARD
 // ============================================
 
-export function getLeaderboard(statKey, { limit = 10 } = {}) {
-  return request(`/api/leaderboard/${encodeURIComponent(statKey)}`, {
+// Retries indefinitely on transient failures — this is what drives the
+// tables on the Leaderboard page, and we'd rather keep trying quietly in
+// the background than show an error for a blip.
+export function getLeaderboard(statKey, { limit = 10, signal } = {}) {
+  return requestWithRetry(`/api/leaderboard/${encodeURIComponent(statKey)}`, {
     params: { limit },
+    signal,
   });
 }
 

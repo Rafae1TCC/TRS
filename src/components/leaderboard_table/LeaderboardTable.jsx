@@ -1,10 +1,12 @@
 import Card from '../card/Card';
 import './LeaderboardTable.css';
 
-export default function LeaderboardTable({ title, data, sortKey, columns }) {
-  const sorted = [...data].sort(
-    (a, b) => Number(b[sortKey]) - Number(a[sortKey])
-  );
+const SKELETON_ROWS = 8;
+
+export default function LeaderboardTable({ title, data, sortKey, columns, loading }) {
+  const sorted = loading
+    ? []
+    : [...data].sort((a, b) => Number(b[sortKey]) - Number(a[sortKey]));
 
   return (
     <div className="leaderboard-table">
@@ -22,15 +24,25 @@ export default function LeaderboardTable({ title, data, sortKey, columns }) {
           ))}
         </div>
 
-        {sorted.map((player, i) => (
-          <Card
-            key={player.name + i}
-            rank={i + 1}
-            name={player.name}
-            columns={columns}
-            stats={player}
-          />
-        ))}
+        {loading
+          ? Array.from({ length: SKELETON_ROWS }).map((_, i) => (
+              <div className="leaderboard-row-skeleton" key={`skeleton-${i}`}>
+                <span className="skeleton-block skeleton-rank" />
+                <span className="skeleton-block skeleton-name" />
+                {columns.map((col) => (
+                  <span className="skeleton-block skeleton-stat" key={col.key} />
+                ))}
+              </div>
+            ))
+          : sorted.map((player, i) => (
+              <Card
+                key={player.uuid ?? player.name + i}
+                rank={i + 1}
+                name={player.name}
+                columns={columns}
+                stats={player}
+              />
+            ))}
       </div>
     </div>
   );

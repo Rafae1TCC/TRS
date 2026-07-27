@@ -1,47 +1,49 @@
-.leaderboard-table {
-  margin-bottom: 70px;
-  min-width: 0;
-  overflow-x: auto;
-}
-
-.leaderboard-table-title {
-  font-size: 1.6rem;
-  font-weight: 700;
-  letter-spacing: -0.5px;
-  margin-bottom: 18px;
-  padding-left: 4px;
-  position: relative;
-}
-
-.leaderboard-table-title::before {
-  content: '';
-  display: inline-block;
-  width: 8px;
-  height: 8px;
-  margin-right: 12px;
-}
-
-.leaderboard-grid {
-  display: grid;
-  column-gap: 16px;
-  row-gap: 10px;
-}
-
-.leaderboard-head {
+.leaderboard-row-skeleton {
   display: grid;
   grid-column: 1 / -1;
   grid-template-columns: subgrid;
   align-items: center;
-  padding: 0 28px 12px;
-  color: var(--text-light);
-  font-size: 0.8rem;
-  letter-spacing: 1px;
-  text-transform: uppercase;
-  border-bottom: 1px solid var(--border);
+  padding: 14px 28px;
+}
+
+.skeleton-block {
+  display: block;
+  height: 14px;
+  border-radius: 4px;
+  background: linear-gradient(
+    90deg,
+    var(--border) 25%,
+    rgba(255, 255, 255, 0.15) 50%,
+    var(--border) 75%
+  );
+  background-size: 200% 100%;
+  animation: skeleton-pulse 1.4s ease-in-out infinite;
+}
+
+.skeleton-rank {
+  width: 18px;
+}
+
+.skeleton-name {
+  width: 60%;
+  height: 16px;
+}
+
+.skeleton-stat {
+  width: 36px;
+}
+
+@keyframes skeleton-pulse {
+  0% {
+    background-position: 200% 0;
+  }
+  100% {
+    background-position: -200% 0;
+  }
 }
 
 @media (max-width: 640px) {
-  .leaderboard-head {
+  .leaderboard-row-skeleton {
     padding-left: 16px;
     padding-right: 16px;
   }
